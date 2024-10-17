@@ -34,7 +34,7 @@ def ate_linear_regression(dataset_path, outcome_var, treatment_var, control_var)
         print(f"Error: File '{dataset_path}' not found.")
         return
     
-    control_vars = control_vars.split(',') if control_vars else []
+    control_var = control_var.split(',') if control_var else []
 
     for col in control_var + [treatment_var]:
         if df[col].dtype == 'object':
@@ -45,6 +45,7 @@ def ate_linear_regression(dataset_path, outcome_var, treatment_var, control_var)
     else:
         formula = f"{outcome_var} ~ C({treatment_var})" if df[treatment_var].dtype.name == 'category' else f"{outcome_var} ~ {treatment_var}"
 
+    print(formula)
     model = smf.ols(formula=formula, data=df).fit()
 
     print(model.summary())
@@ -59,9 +60,11 @@ def ate_linear_regression(dataset_path, outcome_var, treatment_var, control_var)
     print(f"95% Confidence Interval: {treatment_conf_int[0]}, {treatment_conf_int[1]}")
 
 def main():
-    os.chdir('../')
     args = get_args()
-    ate_linear_regression(args.dataset, args.controls, args.treatment, args.outcome)
+    ate_linear_regression(dataset_path= args.dataset,
+                          outcome_var=args.outcome,
+                          treatment_var=args.treatment,
+                          control_var=args.controls)
 
 if __name__ == "__main__":
     main()
