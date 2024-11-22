@@ -52,6 +52,17 @@ def propensity_score_matching(df, treatment_col:str, outcome_col:str):
     
     return ATE
 
-def propensitiy_ipw():
-    
-    return
+def propensitiy_ipw(df,treatment_col:str,outcome_col:str):
+    weight_t = 1/df.query(f"{treatment_col}==1")["propensity_score"]
+    weight_nt = 1/(1-df.query(f"{treatment_col}==0")["propensity_score"])
+    t1 = df.query(f"{treatment_col}==1")[outcome_col] 
+    t0 = df.query(f"{treatment_col}==0")[outcome_col] 
+
+    y1 = sum(t1*weight_t)/len(df)
+    y0 = sum(t0*weight_nt)/len(df)
+
+    print("E[Y1]:", y1)
+    print("E[Y0]:", y0)
+    print("ATE", y1 - y0)
+    ATE = y1 - y0
+    return ATE
