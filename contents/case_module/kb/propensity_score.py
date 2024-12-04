@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import LinearRegression,LogisticRegression
 
 def get_propensity_socre_lr(df, treatment_col:str, covariates:list):
     """_summary_
@@ -65,4 +66,23 @@ def propensitiy_ipw(df,treatment_col:str,outcome_col:str):
     print("E[Y0]:", y0)
     print("ATE", y1 - y0)
     ATE = y1 - y0
+    return ATE
+
+def doubly_robust(df, X, T, Y):
+    X = df[X]
+    
+    ps_model = LogisticRegression(penalty="none",
+                                  max_iter=1000).fit(X, df[T])
+    ps = ps_model.predict_proba(X)[:, 1]
+    
+    m0 = LinearRegression().fit(X[df[T]==0, :], df.query(f"{T}==0")[Y])
+    m1 = LinearRegression().fit(X[df[T]==1, :], df.query(f"{T}==1")[Y])
+    
+    m0_hat = m0.predict(X)
+    m1_hat = m1.predict(X)
+
+    ATE = (
+        np.mean(df[T]*(df[Y] - m1_hat)/ps + m1_hat) -
+        np.mean((1-df[T])*(df[Y] - m0_hat)/(1-ps) + m0_hat)
+    )
     return ATE
