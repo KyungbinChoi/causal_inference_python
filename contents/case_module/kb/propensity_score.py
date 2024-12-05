@@ -15,7 +15,7 @@ def get_propensity_socre_lr(df, treatment_col:str, covariates:list):
     Returns:
         DataFrame: dataframe
     """
-    formula =  f"{treatment_col} ~ " + ' + '.join([f"C({var})" if df[var].dtype.name == 'category' else var for var in covariates + [treatment_col]])
+    formula =  f"{treatment_col} ~ " + ' + '.join([f"C({var})" if df[var].dtype.name == 'category' else var for var in covariates])
     ps_model = smf.logit(formula, data=df.fit(disp=0))
     df = df.assign(propensity_score = ps_model.predict(df))
 
