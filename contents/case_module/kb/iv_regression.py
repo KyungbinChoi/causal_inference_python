@@ -1,6 +1,6 @@
 from linearmodels import IV2SLS
 
-def get_iv_late(df, Y, T, Z, X):
+def get_iv_2SLS(df, Y, T, Z, X):
         
     # 도구변수와 공변량 리스트를 문자열로 변환
     Z_formula = ' + '.join(Z) if Z else ''  # 도구변수는 없을 수도 있음
