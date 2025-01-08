@@ -16,7 +16,7 @@ def get_propensity_socre_lr(df, treatment_col:str, covariates:list):
         DataFrame: dataframe
     """
     formula =  f"{treatment_col} ~ " + ' + '.join([f"C({var})" if df[var].dtype.name == 'category' else var for var in covariates])
-    ps_model = smf.logit(formula, data=df.fit(disp=0))
+    ps_model = smf.logit(formula, data=df).fit(disp=0)
     df = df.assign(propensity_score = ps_model.predict(df))
 
     return df
@@ -69,17 +69,26 @@ def propensitiy_ipw(df,treatment_col:str,outcome_col:str):
     return ATE
 
 def doubly_robust(df, X, T, Y):
-    X = df[X]
+    # 입력된 X columns에서 데이터 추출
+    X_data = df[X].copy()
     
+    # object 타입 컬럼 찾기
+    object_cols = X_data.select_dtypes(include=['object', 'category']).columns
+    
+    # object 타입 컬럼이 있는 경우 더미 변수로 변환
+    if len(object_cols) > 0:
+        X_data = pd.get_dummies(X_data, columns=object_cols, drop_first=True)
+    
+    # 기존 코드 계속...
     ps_model = LogisticRegression(penalty="none",
-                                  max_iter=1000).fit(X, df[T])
-    ps = ps_model.predict_proba(X)[:, 1]
+                                  max_iter=1000).fit(X_data, df[T])
+    ps = ps_model.predict_proba(X_data)[:, 1]
     
-    m0 = LinearRegression().fit(X[df[T]==0, :], df.query(f"{T}==0")[Y])
-    m1 = LinearRegression().fit(X[df[T]==1, :], df.query(f"{T}==1")[Y])
+    m0 = LinearRegression().fit(X_data[df[T]==0], df.query(f"{T}==0")[Y])
+    m1 = LinearRegression().fit(X_data[df[T]==1], df.query(f"{T}==1")[Y])
     
-    m0_hat = m0.predict(X)
-    m1_hat = m1.predict(X)
+    m0_hat = m0.predict(X_data)
+    m1_hat = m1.predict(X_data)
 
     ATE = (
         np.mean(df[T]*(df[Y] - m1_hat)/ps + m1_hat) -
