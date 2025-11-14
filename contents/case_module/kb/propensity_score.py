@@ -36,8 +36,7 @@ def propensity_score_matching(df, treatment_col:str, outcome_col:str):
     treated = df.query(f"{T}==1")
     untreated = df.query(f"{T}==0")
 
-    mt0 = KNeighborsRegressor(n_neighbors=1).fit(untreated[[X]],
-                                                untreated[Y])
+    mt0 = KNeighborsRegressor(n_neighbors=1).fit(untreated[[X]], untreated[Y])
 
     mt1 = KNeighborsRegressor(n_neighbors=1).fit(treated[[X]], treated[Y])
 
